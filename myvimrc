@@ -1,0 +1,357 @@
+" >>> 基础配置 <<<
+let mapleader = ","
+set nocompatible
+filetype on
+filetype plugin on
+set noeb
+syntax enable
+syntax on
+set t_Co=256
+set cmdheight=2
+set showcmd
+set ruler
+set laststatus=2
+set number
+set cursorline
+set whichwrap+=<,>,h,l
+set ttimeoutlen=0
+set scrolloff=2
+set path +=.,/usr/include
+
+set autoindent
+set cindent
+set cinoptions=g0,:0,N-s,(0
+set smartindent
+filetype indent on
+set expandtab
+set tabstop=4
+set shiftwidth=4
+set softtabstop=4
+set smarttab
+" set nowrap
+set backspace=2
+set sidescroll=10
+set nofoldenable
+
+set wildmenu
+set completeopt-=preview
+
+set hlsearch
+set incsearch
+set ignorecase
+set smartcase
+
+set nobackup
+set noswapfile
+set autoread
+set autowrite
+set confirm
+
+set langmenu=zh_CN.UTF-8
+set helplang=cn
+set termencoding=utf-8
+set encoding=utf8
+set fileencodings=utf8,ucs-bom,gbk,cp936,gb2312,gb18030
+
+nnoremap <c-j> <c-w>j
+nnoremap <c-k> <c-w>k
+nnoremap <c-h> <c-w>h
+nnoremap <c-l> <c-w>l
+
+vmap <c-c> "+y
+
+autocmd BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | execute "normal! g'\"" | endif
+
+set background=dark
+let g:onedark_termcolors=256
+colorscheme Tomorrow-Night
+
+" >>> 插件 <<<
+
+call plug#begin()
+
+Plug 'preservim/nerdtree'
+Plug 'tiagofumo/vim-nerdtree-syntax-highlight'
+Plug 'Xuyuanp/nerdtree-git-plugin'
+Plug 'chxuan/cpp-mode'
+Plug 'preservim/tagbar'
+Plug 'ycm-core/YouCompleteMe', { 'do': 'python3 ./install.py --clangd-completer --go-completer' }
+Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
+Plug 'haya14busa/incsearch.vim'
+Plug 'jiangmiao/auto-pairs'
+Plug 'godlygeek/tabular' " `:Tab /=` 对选中内容以=号为基准对齐
+Plug 'tpope/vim-surround' " `cs(]` 修改成对符号()->[]
+Plug 'tpope/vim-commentary' " 将代码注释掉
+Plug 'tpope/vim-repeat'
+Plug 'tpope/vim-endwise'
+Plug 'tpope/vim-fugitive'
+Plug 'skywind3000/asyncrun.vim'
+Plug 'ZhuzhuNo3/vim-ack'
+Plug 'octol/vim-cpp-enhanced-highlight'
+Plug 'vim-airline/vim-airline'
+Plug 'vim-airline/vim-airline-themes'
+Plug 'ryanoasis/vim-devicons'
+Plug 'junegunn/vim-slash'
+Plug 'junegunn/gv.vim'
+Plug 'terryma/vim-smooth-scroll'
+Plug 'plasticboy/vim-markdown'
+Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
+
+call plug#end()
+
+nnoremap <leader><leader>i :PlugInstall<cr>
+nnoremap <leader><leader>u :PlugUpdate<cr>
+nnoremap <leader><leader>c :PlugClean<cr>
+
+" >>> 插件配置 <<<
+
+" nerdtree
+nnoremap <silent> <leader>n :NERDTreeToggle<cr>
+let g:NERDTreeFileExtensionHighlightFullName = 1
+let g:NERDTreeExactMatchHighlightFullName = 1
+let g:NERDTreePatternMatchHighlightFullName = 1
+let g:NERDTreeHighlightFolders = 1         
+let g:NERDTreeHighlightFoldersFullName = 1 
+let g:NERDTreeDirArrowExpandable='▷'
+let g:NERDTreeDirArrowCollapsible='▼'
+let g:NERDTreeGitStatusIndicatorMapCustom = {
+                \ 'Modified'  :'✹',
+                \ 'Staged'    :'✚',
+                \ 'Untracked' :'✭',
+                \ 'Renamed'   :'➜',
+                \ 'Unmerged'  :'═',
+                \ 'Deleted'   :'✖',
+                \ 'Dirty'     :'✗',
+                \ 'Ignored'   :'☒',
+                \ 'Clean'     :'✔︎',
+                \ 'Unknown'   :'?',
+                \ }
+
+" cpp-mode
+nnoremap <leader>y :CopyCode<cr>
+nnoremap <leader>p :PasteCode<cr>
+nnoremap <leader>U :GoToFunImpl<cr>
+nnoremap <silent> <leader>a :Switch<cr>
+
+" tagbar
+let g:tagbar_width = 30
+nnoremap <silent> <leader>t :TagbarToggle<cr>
+
+" YCM
+let g:ycm_clangd_args=['--header-insertion=never']
+let g:ycm_show_diagnostics_ui = 0
+let g:ycm_confirm_extra_conf = 0
+let g:ycm_global_ycm_extra_conf = '~/.vim/plugged/YouCompleteMe/.ycm_extra_conf.py'
+" let g:ycm_global_ycm_extra_conf = '~/.ycm_extra_conf.py'
+let g:ycm_error_symbol = '✗'
+let g:ycm_warning_symbol = '✹'
+let g:ycm_seed_identifiers_with_syntax = 1 
+let g:ycm_complete_in_comments = 1 
+let g:ycm_complete_in_strings = 1 
+let g:ycm_collect_identifiers_from_tags_files = 1
+" let g:ycm_log_level='debug'
+let g:ycm_min_num_of_chars_for_completion = 2
+let g:ycm_semantic_triggers =  {
+            \   'c,cpp,objcpp' : ['->', '.', '::','re!\w{2}'],
+            \   'python,go' : ['.','re!\w{2}'],
+            \ }
+            " \   'cs,java,javascript,typescript,d,python,perl6,scala,vb,elixir,go' : ['.','re!\w{2}'],
+nnoremap <leader>u :YcmCompleter GoToDeclaration<cr>
+" nnoremap <leader>U :YcmCompleter GoToDefinition<cr> 
+nnoremap <leader>o :YcmCompleter GoToInclude<cr>
+" nnoremap <leader>ff :YcmCompleter FixIt<cr>
+
+" LeaderF
+nnoremap <leader>f :LeaderfFile ~/<cr>
+let g:Lf_WildIgnore = {
+            \ 'dir': ['.svn','.git','.hg','.vscode','.wine','.deepinwine','.oh-my-zsh'],
+            \ 'file': ['*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.py[co]']
+            \}
+let g:Lf_UseCache = 0
+
+" incsearch
+map /  <Plug>(incsearch-forward)
+map ?  <Plug>(incsearch-backward)
+map g/ <Plug>(incsearch-stay)
+
+" ack
+let g:ack_program_lists = [
+            \ '/youguess',
+            \ ]
+vnoremap <silent> <leader>F :call ack#search(1,"")<cr>
+nnoremap <silent> <leader>F :call ack#search(0,"")<cr>
+hi QuickFixLine ctermfg=NONE ctermbg=12 guifg=NONE guibg=#de935f
+
+" airline
+let g:airline_powerline_fonts = 1
+let g:airline#extensions#whitespace#enabled = 0
+let g:airline#extensions#tabline#enabled = 1
+let g:airline_left_sep = ''
+let g:airline_left_alt_sep = ''
+let g:airline_right_sep = ''
+let g:airline_right_alt_sep = ''
+
+" gv
+nnoremap <leader>g :GV<cr>
+nnoremap <leader>G :GV!<cr>
+
+" vim-smooth-scroll
+noremap <silent> <c-u> :call smooth_scroll#up(&scroll, 8, 1)<CR>
+noremap <silent> <c-d> :call smooth_scroll#down(&scroll, 8, 1)<CR>
+
+" markdown
+let g:mkdp_path_to_chrome = "/Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome"
+let g:mkdp_markdown_css='githubdiy.css'
+nmap <silent> <F7> <Plug>MarkdownPreview
+imap <silent> <F7> <Plug>MarkdownPreview
+nmap <silent> <F8> <Plug>MarkdownPreviewStop
+imap <silent> <F8> <Plug>MarkdownPreviewStop
+
+" 格式化Json
+nnoremap <leader>j :JsonFormat<cr>
+command! JsonFormat :execute '%!python -m json.tool'
+  \ | :execute '%!python -c "import re,sys;sys.stdout.write(re.sub(r\"\\\u[0-9a-f]{4}\", lambda m:m.group().decode(\"unicode_escape\").encode(\"utf-8\"), sys.stdin.read()))"'
+  \ | :set ft=javascript
+  \ | :1
+
+" >>> 瞎折腾产物 <<<
+
+" 代码折叠 折叠最近的大括号
+set foldmethod=manual
+command! -nargs=0 FoldCurrentField :call <sid>fold_current_field()
+function! s:fold_current_field()
+    let curpos = getcurpos()
+    execute "normal! g_"
+    let n = 20
+    while (n > 0
+                \ && '{' != matchstr(getline('.'), '\%' . col('.') . 'c.')
+                \ && '}' != matchstr(getline('.'), '\%' . col('.') . 'c.')
+                \ && ';' != matchstr(getline('.'), '\%' . col('.') . 'c.')
+                \ && 1 != col('.'))
+        let n -= 1
+        execute "normal! jg_"
+    endwhile
+    if '{' == matchstr(getline('.'), '\%' . col('.') . 'c.')
+        execute "normal! j0"
+    else
+        call setpos('.', curpos)
+    endif
+    if (-1 != foldclosed(line('.')) || 0 != foldlevel('.'))
+        execute "normal! za"
+        return
+    endif
+    let curWord = matchstr(getline('.'), '\%' . col('.') . 'c.')
+    if (curWord == '{' || curWord == '}')
+        execute "normal! zfi{"
+        return
+    endif
+    execute "normal! ]}"
+    if ('}' != matchstr(getline('.'), '\%' . col('.') . 'c.'))
+        echo "Fold failed!"
+        call setpos('.', curpos)
+        return
+    endif
+    execute "normal! zfi{"
+endf
+nnoremap <silent> zz :FoldCurrentField<cr>
+
+" buffer开关
+command! -nargs=0 CloseBufferFirst :call <sid>close_current_buffer()
+command! -nargs=0 CloseWindowFirst :call <sid>close_current_window()
+
+function! s:close_current_buffer()
+    let curr = bufnr("%")
+    let n = winnr('$')
+    while n > 0
+        if curr == bufnr("%")
+            execute ":bn"
+        endif
+        let n -= 1
+    endwhile
+    execute ":bd " . curr
+endf
+
+function! s:close_current_window()
+    if winnr('$') > 1
+        execute ":close"
+    " elseif len(getbufinfo({'buflisted':1})) == 1
+    elseif len(filter(range(1, bufnr('$')), 'buflisted(v:val)')) == 1
+        execute ":q"
+    else
+        execute ":bd"
+    endif
+endf
+
+nnoremap <silent> <c-p> :bp<cr>
+nnoremap <silent> <c-n> :bn<cr>
+nnoremap <silent> <leader>d :CloseWindowFirst<cr>
+nnoremap <silent> <leader>D :CloseBufferFirst<cr>
+
+nnoremap <leader>- :vertical resize -3<CR>
+nnoremap <leader>= :vertical resize +3<CR>
+
+" 运行代码
+nnoremap <leader>r :call RunCode()<cr>
+function! RunCode()
+    exec "w"
+    if &filetype == 'c'
+        let compile_flag = input("Flags: ")
+        silent execute ":AsyncRun -strip -raw gcc " . expand("%") . " -o " . expand("%<") . " " . compile_flag . " && chmod +x " . expand("%<") . " && ./" . expand("%<")
+        silent execute ":copen"
+    elseif &filetype == 'cpp'
+        let compile_flag = input("Flags: ")
+        silent execute ":AsyncRun -strip -raw g++ " . expand("%") . " -o " . expand("%<") . " " . compile_flag . " && chmod +x " . expand("%<") . " && ./" . expand("%<")
+        silent execute ":copen"
+    elseif &filetype == 'go'
+        silent execute ":AsyncRun -strip -raw go run " . expand("%")
+        silent execute ":copen"
+    endif
+endfunction
+
+" 新文件自动填充
+autocmd BufNewFile *.c exec ":call AddNewC()"
+autocmd BufNewFile *.cpp,*.cc exec ":call AddNewCPP()"
+autocmd BufNewFile *.h,*.hpp exec ":call AddNewHPP()"
+autocmd BufNewFile *.go exec ":call AddNewGo()"
+
+function! AddNewC()
+	call append(0, "#include <stdio.h>")
+	call append(1, "")
+	call append(2, "int main()")
+	call append(3, "{")
+	call append(4, "    ")
+	call append(5, "}")
+endf
+
+function! AddNewCPP()
+    call append(0, "#include <iostream>")
+	call append(1, "using std::cout;")
+	call append(2, "using std::endl;")
+	call append(3, "")
+	call append(4, "int main()")
+	call append(5, "{")
+	call append(6, "    ")
+	call append(7, "}")
+endf
+
+function! AddNewHPP()
+    let fileName = expand("%:r")
+    call append(0, "#ifndef ".toupper(fileName)."_H_")
+    call append(1, "#define ".toupper(fileName)."_H_")
+	call append(2, "")
+	call append(3, "")
+	call append(4, "#endif /* ".toupper(fileName)."_H_ */")
+endf
+
+function! AddNewGo()
+    call append(0, "package main")
+	call append(1, "")
+    call append(2, "import (")
+	call append(3, "    \"fmt\"")
+	call append(4, ")")
+	call append(5, "")
+    call append(6, "func main() {")
+	call append(7, "    fmt.Println(\"Zzz\")")
+    call append(8, "}")
+endf
+
