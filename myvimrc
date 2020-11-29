@@ -17,6 +17,7 @@ set whichwrap+=<,>,h,l
 set ttimeoutlen=0
 set scrolloff=2
 set path +=.,/usr/include
+" set mouse=a
 
 set autoindent
 set cindent
@@ -28,7 +29,9 @@ set tabstop=4
 set shiftwidth=4
 set softtabstop=4
 set smarttab
-" set nowrap
+set wrap
+set textwidth=0
+set nolinebreak
 set backspace=2
 set sidescroll=10
 set nofoldenable
@@ -86,16 +89,28 @@ Plug 'tpope/vim-repeat'
 Plug 'tpope/vim-endwise'
 Plug 'tpope/vim-fugitive'
 Plug 'skywind3000/asyncrun.vim'
+Plug 'zivyangll/git-blame.vim'
 Plug 'ZhuzhuNo3/vim-ack'
+" Plug 'Shougo/deol.nvim'
+" Plug 'Shougo/deoplete.nvim'
+" Plug 'Shougo/deoplete-zsh'
+" Plug 'Shougo/unite.vim'
+" Plug 'Shougo/vimproc'
+" Plug 'Shougo/vimfiler'
+" Plug 'Shougo/neossh.vim'
 Plug 'octol/vim-cpp-enhanced-highlight'
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'ryanoasis/vim-devicons'
-Plug 'junegunn/vim-slash'
+" Plug 'junegunn/vim-slash'
 Plug 'junegunn/gv.vim'
-Plug 'terryma/vim-smooth-scroll'
+" Plug 'terryma/vim-smooth-scroll'
 Plug 'plasticboy/vim-markdown'
 Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
+" Plug 'MarcWeber/vim-addon-mw-utils'
+" Plug 'tomtom/tlib_vim'
+" Plug 'garbas/vim-snipmate'
+" Plug 'honza/vim-snippets'
 
 call plug#end()
 
@@ -130,22 +145,50 @@ let g:NERDTreeGitStatusIndicatorMapCustom = {
 " cpp-mode
 nnoremap <leader>y :CopyCode<cr>
 nnoremap <leader>p :PasteCode<cr>
-nnoremap <leader>U :GoToFunImpl<cr>
+" nnoremap <leader>U :GoToFunImpl<cr>
 nnoremap <silent> <leader>a :Switch<cr>
 
 " tagbar
 let g:tagbar_width = 30
 nnoremap <silent> <leader>t :TagbarToggle<cr>
+" tagbar go support
+let g:tagbar_type_go = {
+            \ 'ctagstype' : 'go',
+            \ 'kinds'     : [
+            \ 'p:package',
+            \ 'i:imports',
+            \ 'c:constants',
+            \ 'v:variables',
+            \ 't:types',
+            \ 'n:interfaces',
+            \ 'w:fields',
+            \ 'e:embedded',
+            \ 'm:methods',
+            \ 'r:constructor',
+            \ 'f:functions'
+            \ ],
+            \ 'sro' : '.',
+            \ 'kind2scope' : {
+            \ 't' : 'ctype',
+            \ 'n' : 'ntype'
+            \ },
+            \ 'scope2kind' : {
+            \ 'ctype' : 't',
+            \ 'ntype' : 'n'
+            \ },
+            \ 'ctagsbin'  : 'gotags',
+            \ 'ctagsargs' : '-sort -silent'
+            \ }
 
 " YCM
 let g:ycm_clangd_args=['--header-insertion=never']
-let g:ycm_show_diagnostics_ui = 0
+let g:ycm_show_diagnostics_ui = 1
 let g:ycm_confirm_extra_conf = 0
-let g:ycm_global_ycm_extra_conf = '~/.vim/plugged/YouCompleteMe/.ycm_extra_conf.py'
-" let g:ycm_global_ycm_extra_conf = '~/.ycm_extra_conf.py'
+" let g:ycm_global_ycm_extra_conf = '~/.vim/plugged/YouCompleteMe/.ycm_extra_conf.py'
+let g:ycm_global_ycm_extra_conf = '~/.ycm_extra_conf.py'
 let g:ycm_error_symbol = '✗'
 let g:ycm_warning_symbol = '✹'
-let g:ycm_seed_identifiers_with_syntax = 1 
+" let g:ycm_seed_identifiers_with_syntax = 1 
 let g:ycm_complete_in_comments = 1 
 let g:ycm_complete_in_strings = 1 
 let g:ycm_collect_identifiers_from_tags_files = 1
@@ -157,7 +200,7 @@ let g:ycm_semantic_triggers =  {
             \ }
             " \   'cs,java,javascript,typescript,d,python,perl6,scala,vb,elixir,go' : ['.','re!\w{2}'],
 nnoremap <leader>u :YcmCompleter GoToDeclaration<cr>
-" nnoremap <leader>U :YcmCompleter GoToDefinition<cr> 
+nnoremap <leader>U :YcmCompleter GoToDefinition<cr> 
 nnoremap <leader>o :YcmCompleter GoToInclude<cr>
 " nnoremap <leader>ff :YcmCompleter FixIt<cr>
 
@@ -174,13 +217,24 @@ map /  <Plug>(incsearch-forward)
 map ?  <Plug>(incsearch-backward)
 map g/ <Plug>(incsearch-stay)
 
+" git-blame
+nnoremap <Leader>b :<C-u>call gitblame#echo()<CR>
+
 " ack
-let g:ack_program_lists = [
-            \ '/youguess',
-            \ ]
+let g:ack_focus_after_search = 1
+" let g:ack_program_lists = []
 vnoremap <silent> <leader>F :call ack#search(1,"")<cr>
 nnoremap <silent> <leader>F :call ack#search(0,"")<cr>
 hi QuickFixLine ctermfg=NONE ctermbg=12 guifg=NONE guibg=#de935f
+
+" deol 用了tmux之后还是tmux更香
+" tnoremap <ESC> <ESC><C-\><C-n>
+" " nnoremap <silent> <leader>T :botright vs \| Deol \|vertical resize 50<cr>
+" nnoremap <silent> <leader>T :botright sp \| Deol \|resize 10<cr>
+" let g:deol#extra_options = {'term_finish':'close'}
+" augroup deolresize
+"     autocmd BufEnter * :if &ft == 'deol' | resize 10 | normal! i | endif
+" augroup END
 
 " airline
 let g:airline_powerline_fonts = 1
@@ -195,13 +249,16 @@ let g:airline_right_alt_sep = ''
 nnoremap <leader>g :GV<cr>
 nnoremap <leader>G :GV!<cr>
 
-" vim-smooth-scroll
-noremap <silent> <c-u> :call smooth_scroll#up(&scroll, 8, 1)<CR>
-noremap <silent> <c-d> :call smooth_scroll#down(&scroll, 8, 1)<CR>
+" " vim-smooth-scroll
+" noremap <silent> <c-u> :call smooth_scroll#up(&scroll, 8, 1)<CR>
+" noremap <silent> <c-d> :call smooth_scroll#down(&scroll, 8, 1)<CR>
 
 " markdown
 let g:mkdp_path_to_chrome = "/Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome"
+let g:vim_markdown_toc_autofit = 1
+let g:vim_markdown_math = 1
 let g:mkdp_markdown_css='githubdiy.css'
+let g:mkdp_auto_close = 0
 nmap <silent> <F7> <Plug>MarkdownPreview
 imap <silent> <F7> <Plug>MarkdownPreview
 nmap <silent> <F8> <Plug>MarkdownPreviewStop
@@ -216,44 +273,71 @@ command! JsonFormat :execute '%!python -m json.tool'
 
 " >>> 瞎折腾产物 <<<
 
+" mouse mode convert
+nnoremap <silent><leader>m :if &mouse == 'a' \| set mouse= \| echo 'mouse mode off' \| else \| set mouse=a \| echo 'mouse mode on' \| endif<cr>
+
+" 8进制中文转换 如：\346\230\257\347\232\204 == 是的
+vnoremap <silent><leader>c :s/\(\(\\\d\{3\}\)\{3,\}\)/\=system('x=`cat`&&awk "BEGIN{printf \"$x\"}"', submatch(1))/g<cr>:noh<cr>
+nnoremap <silent><leader>c :s/\(\(\\\d\{3\}\)\{3,\}\)/\=system('x=`cat`&&awk "BEGIN{printf \"$x\"}"', submatch(1))/g<cr>:noh<cr>
+
 " 代码折叠 折叠最近的大括号
 set foldmethod=manual
 command! -nargs=0 FoldCurrentField :call <sid>fold_current_field()
+" augroup foldFunc
+"     autocmd! BufWritePre,BufWinLeave *.js,*.c,*.cc,*.cpp,*.h,*.hh,*.hpp,*.go mkview
+"     autocmd! BufWinEnter             *.js,*.c,*.cc,*.cpp,*.h,*.hh,*.hpp,*.go call <sid>fold_init()
+" augroup END
+" function! s:fold_init()
+"     loadview
+"     if v:foldstart
+"         execute "normal! zR"
+"         return
+"     endif
+"     let curpos = getcurpos()
+"     call setpos('.', [0, 1, 1, 0, 0])
+"     while 1
+"         let l:l = search('{', 'W', 0, 0, 'synIDattr(synID(line("."), col("."), 0), "name") =~? "string\\|comment"')    
+"         let pos = getcurpos()
+"         let l:rl = searchpair('{', '', '}', 'W', 'synIDattr(synID(line("."), col("."), 0), "name") =~? "string\\|comment"')
+"         if (l:l == 0 || l:rl == 0)
+"             call setpos('.', curpos)
+"             execute "normal! zR"
+"             return
+"         endif
+"         call setpos('.', pos)
+"         if (l:rl - l:l > 2)
+"             execute (l:l+1).",".(l:rl-1)."fo"
+"         endif
+"     endwhile
+" endfunction
 function! s:fold_current_field()
+    if (-1 != foldclosed(line('.')))
+        silent execute "normal! zo"
+        return
+    endif
     let curpos = getcurpos()
     execute "normal! g_"
-    let n = 20
-    while (n > 0
-                \ && '{' != matchstr(getline('.'), '\%' . col('.') . 'c.')
-                \ && '}' != matchstr(getline('.'), '\%' . col('.') . 'c.')
-                \ && ';' != matchstr(getline('.'), '\%' . col('.') . 'c.')
-                \ && 1 != col('.'))
-        let n -= 1
-        execute "normal! jg_"
-    endwhile
-    if '{' == matchstr(getline('.'), '\%' . col('.') . 'c.')
-        execute "normal! j0"
-    else
-        call setpos('.', curpos)
-    endif
-    if (-1 != foldclosed(line('.')) || 0 != foldlevel('.'))
-        execute "normal! za"
+    let searchline = searchpair('{', '', '}', 'cbW', 'synIDattr(synID(line("."), col("."), 0), "name") =~? "string\\|comment"')
+    let rsearchline = searchpair('{', '', '}', 'W', 'synIDattr(synID(line("."), col("."), 0), "name") =~? "string\\|comment"')
+    call setpos('.', curpos)
+    if (searchline == 0 || rsearchline == 0)
+        echo "折叠失败"
+        return
+    elseif (rsearchline - searchline < 3)
+        echo "行数过短, 无法折叠"
         return
     endif
-    let curWord = matchstr(getline('.'), '\%' . col('.') . 'c.')
-    if (curWord == '{' || curWord == '}')
-        execute "normal! zfi{"
+    call cursor(searchline+1,0)
+    if (-1 != foldclosed(line('.')))
+        silent execute "normal! zo"
         return
     endif
-    execute "normal! ]}"
-    if ('}' != matchstr(getline('.'), '\%' . col('.') . 'c.'))
-        echo "Fold failed!"
-        call setpos('.', curpos)
-        return
+    if (0 == foldlevel('.'))
+        execute (searchline+1).",".(rsearchline-1)."fo"
     endif
-    execute "normal! zfi{"
+    execute "normal! zc"
 endf
-nnoremap <silent> zz :FoldCurrentField<cr>
+nnoremap <silent> za :FoldCurrentField<cr>
 
 " buffer开关
 command! -nargs=0 CloseBufferFirst :call <sid>close_current_buffer()
@@ -282,6 +366,8 @@ function! s:close_current_window()
     endif
 endf
 
+" nnoremap <silent> <c-p> :bp \| if &filetype == 'deol' \| bp \| endif<cr>
+" nnoremap <silent> <c-n> :bn \| if &filetype == 'deol' \| bn \| endif<cr>
 nnoremap <silent> <c-p> :bp<cr>
 nnoremap <silent> <c-n> :bn<cr>
 nnoremap <silent> <leader>d :CloseWindowFirst<cr>
@@ -303,16 +389,21 @@ function! RunCode()
         silent execute ":AsyncRun -strip -raw g++ " . expand("%") . " -o " . expand("%<") . " " . compile_flag . " && chmod +x " . expand("%<") . " && ./" . expand("%<")
         silent execute ":copen"
     elseif &filetype == 'go'
-        silent execute ":AsyncRun -strip -raw go run " . expand("%")
+        silent execute ":AsyncRun -strip -raw go run " . expand("%:p")
         silent execute ":copen"
     endif
 endfunction
 
 " 新文件自动填充
+autocmd BufNewFile *.sh exec ":call AddNewSh()"
 autocmd BufNewFile *.c exec ":call AddNewC()"
 autocmd BufNewFile *.cpp,*.cc exec ":call AddNewCPP()"
 autocmd BufNewFile *.h,*.hpp exec ":call AddNewHPP()"
 autocmd BufNewFile *.go exec ":call AddNewGo()"
+
+function! AddNewSh()
+	call append(0, "#!/bin/bash")
+endfunction
 
 function! AddNewC()
 	call append(0, "#include <stdio.h>")
@@ -353,5 +444,6 @@ function! AddNewGo()
     call append(6, "func main() {")
 	call append(7, "    fmt.Println(\"Zzz\")")
     call append(8, "}")
+	call append(9, "")
 endf
 
