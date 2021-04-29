@@ -17,6 +17,7 @@ set whichwrap+=<,>,h,l
 set ttimeoutlen=0
 set scrolloff=2
 set path +=.,/usr/include
+set fileformats=unix,dos
 " set mouse=a
 
 set autoindent
@@ -61,7 +62,25 @@ nnoremap <c-k> <c-w>k
 nnoremap <c-h> <c-w>h
 nnoremap <c-l> <c-w>l
 
+function! Get_visual_selection()
+    let [line_start, column_start] = getpos("'<")[1:2]
+    let [line_end, column_end] = getpos("'>")[1:2]
+    let lines = getline(line_start, line_end)
+    if len(lines) == 0
+        return ''
+    endif
+    let lines[-1] = lines[-1][:column_end - 1]
+    let lines[0] = lines[0][column_start - 1:]
+    return join(lines, "\n")
+endfunction
+
+" for ssh
+" vmap <silent> <c-c> :<c-u>call system('nc -c ${SSH_CONNECTION%% *} 2000', Get_visual_selection())<cr>
+
 vmap <c-c> "+y
+
+" cd to path of current file 
+nnoremap <silent> <leader><leader>cd :lcd %:p:h<cr>
 
 autocmd BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | execute "normal! g'\"" | endif
 
@@ -82,7 +101,7 @@ Plug 'ycm-core/YouCompleteMe', { 'do': 'python3 ./install.py --clangd-completer 
 Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
 Plug 'haya14busa/incsearch.vim'
 Plug 'jiangmiao/auto-pairs'
-Plug 'godlygeek/tabular' " `:Tab /=` 对选中内容以=号为基准对齐
+Plug 'junegunn/vim-easy-align'
 Plug 'tpope/vim-surround' " `cs(]` 修改成对符号()->[]
 Plug 'tpope/vim-commentary' " 将代码注释掉
 Plug 'tpope/vim-repeat'
@@ -182,10 +201,11 @@ let g:tagbar_type_go = {
 
 " YCM
 let g:ycm_clangd_args=['--header-insertion=never']
+let g:ycm_clangd_binary_path='/usr/local/bin/clangd'
 let g:ycm_show_diagnostics_ui = 1
 let g:ycm_confirm_extra_conf = 0
 " let g:ycm_global_ycm_extra_conf = '~/.vim/plugged/YouCompleteMe/.ycm_extra_conf.py'
-let g:ycm_global_ycm_extra_conf = '~/.ycm_extra_conf.py'
+" let g:ycm_global_ycm_extra_conf = '~/.ycm_extra_conf.py'
 let g:ycm_error_symbol = '✗'
 let g:ycm_warning_symbol = '✹'
 " let g:ycm_seed_identifiers_with_syntax = 1 
@@ -199,8 +219,8 @@ let g:ycm_semantic_triggers =  {
             \   'python,go' : ['.','re!\w{2}'],
             \ }
             " \   'cs,java,javascript,typescript,d,python,perl6,scala,vb,elixir,go' : ['.','re!\w{2}'],
-nnoremap <leader>u :YcmCompleter GoToDeclaration<cr>
-nnoremap <leader>U :YcmCompleter GoToDefinition<cr> 
+nnoremap <leader>U :YcmCompleter GoToDeclaration<cr>
+nnoremap <leader>u :YcmCompleter GoToDefinition<cr> 
 nnoremap <leader>o :YcmCompleter GoToInclude<cr>
 " nnoremap <leader>ff :YcmCompleter FixIt<cr>
 
@@ -216,6 +236,10 @@ let g:Lf_UseCache = 0
 map /  <Plug>(incsearch-forward)
 map ?  <Plug>(incsearch-backward)
 map g/ <Plug>(incsearch-stay)
+
+" easy-align
+xmap ga <Plug>(EasyAlign)
+nmap ga <Plug>(EasyAlign)
 
 " git-blame
 nnoremap <Leader>b :<C-u>call gitblame#echo()<CR>
