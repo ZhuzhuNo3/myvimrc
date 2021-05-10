@@ -288,14 +288,14 @@ imap <silent> <F7> <Plug>MarkdownPreview
 nmap <silent> <F8> <Plug>MarkdownPreviewStop
 imap <silent> <F8> <Plug>MarkdownPreviewStop
 
-" 格式化Json
-nnoremap <leader>j :JsonFormat<cr>
-command! JsonFormat :execute '%!python -m json.tool'
-  \ | :execute '%!python -c "import re,sys;sys.stdout.write(re.sub(r\"\\\u[0-9a-f]{4}\", lambda m:m.group().decode(\"unicode_escape\").encode(\"utf-8\"), sys.stdin.read()))"'
-  \ | :set ft=javascript
-  \ | :1
-
 " >>> 瞎折腾产物 <<<
+
+" 格式化Json
+nnoremap <silent> <leader>j :execute '%!jq -M --indent 4' \| :set ft=json \| :1<cr>
+vnoremap <silent> <leader>j :!jq -M --indent 4<cr>
+" or use: JsonFormat
+" #!/bin/zsh
+" python -m json.tool|python -c "import re,sys;sys.stdout.write(re.sub(r\"\\\u[0-9a-f]{4}\", lambda m:m.group().decode(\"unicode_escape\").encode(\"utf-8\"), sys.stdin.read()))"
 
 " mouse mode convert
 nnoremap <silent><leader>m :if &mouse == 'a' \| set mouse= \| echo 'mouse mode off' \| else \| set mouse=a \| echo 'mouse mode on' \| endif<cr>
