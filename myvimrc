@@ -69,6 +69,13 @@ set termencoding=utf-8
 set encoding=utf8
 set fileencodings=utf8,ucs-bom,gbk,cp936,gb2312,gb18030
 
+" diff配色
+" highlight DiffAdd    cterm=bold ctermfg=10 ctermbg=17 gui=none guifg=bg guibg=Red
+" highlight DiffDelete cterm=bold ctermfg=10 ctermbg=17 gui=none guifg=bg guibg=Red
+" highlight DiffChange cterm=bold ctermfg=10 ctermbg=17 gui=none guifg=bg guibg=Red
+" highlight DiffText   cterm=bold ctermfg=10 ctermbg=88 gui=none guifg=bg guibg=Red
+
+
 nnoremap <c-j> <c-w>j
 nnoremap <c-k> <c-w>k
 nnoremap <c-h> <c-w>h
@@ -135,6 +142,7 @@ Plug 'Xuyuanp/nerdtree-git-plugin'
 Plug 'chxuan/cpp-mode'
 Plug 'preservim/tagbar'
 Plug 'ycm-core/YouCompleteMe', { 'do': 'python3 ./install.py --clangd-completer --go-completer' }
+Plug 'jasontbradshaw/pigeon.vim'
 Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
 Plug 'haya14busa/incsearch.vim'
 Plug 'jiangmiao/auto-pairs'
@@ -239,6 +247,7 @@ let g:tagbar_type_go = {
 
 " YCM
 let g:ycm_clangd_args=['--header-insertion=never']
+let g:ycm_gopls_binary_path='/Users/zz/Code/go/bin/gopls'
 let g:ycm_clangd_binary_path='/usr/local/bin/clangd'
 let g:ycm_show_diagnostics_ui = 1
 let g:ycm_confirm_extra_conf = 0
@@ -264,6 +273,9 @@ nnoremap <leader>o :YcmCompleter GoToInclude<cr>
 nnoremap <leader>ff :YcmCompleter FixIt<cr>
 nmap <leader>h <plug>(YCMHover)
 
+" pigeon
+au BufRead,BufNewFile *.peg set ft=pigeon
+
 " LeaderF
 " <leader>f -> search from current path
 nnoremap <leader><leader>f :LeaderfFile ~/<cr>
@@ -284,7 +296,9 @@ nmap ga <Plug>(EasyAlign)
 let g:easy_align_ignore_groups = ['String']
 
 " git-blame
-nnoremap <Leader>b :<C-u>call gitblame#echo()<CR>
+let g:enable_git_blame = 0
+nnoremap <silent><leader>b :if (g:enable_git_blame == 0) \| let g:enable_git_blame = 1 \| execute ":GitBlame" \| else \| let g:enable_git_blame = 0 \| echo '' \| endif<cr>
+autocmd CursorMoved * if (g:enable_git_blame != 0) | exec ":GitBlame" | endif
 
 " AsyncRun
 let $PYTHONUNBUFFERED=1
@@ -329,7 +343,8 @@ nnoremap <leader>G :GV!<cr>
 let g:mkdp_path_to_chrome = "/Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome"
 let g:vim_markdown_toc_autofit = 1
 let g:vim_markdown_math = 1
-let g:mkdp_markdown_css='githubdiy.css'
+" let g:mkdp_markdown_css='githubdiy.css'
+let g:mkdp_markdown_css="/Users/zz/Library/Application\\ Support/abnerworks.Typora/themes/githubdiy.css"
 let g:mkdp_auto_close = 0
 nmap <silent> <F7> <Plug>MarkdownPreview
 imap <silent> <F7> <Plug>MarkdownPreview
@@ -339,8 +354,8 @@ imap <silent> <F8> <Plug>MarkdownPreviewStop
 " >>> 瞎折腾产物 <<<
 
 " 格式化Json
-nnoremap <silent> <leader>j :execute '%!jq -M --indent 4' \| :set ft=json \| :1<cr>
-vnoremap <silent> <leader>j :!jq -M --indent 4<cr>
+nnoremap <silent> <leader>j :execute '%!jq -M --indent 2' \| :set ft=json \| :1<cr>
+vnoremap <silent> <leader>j :!jq -M --indent 2<cr>
 " or use: JsonFormat
 " #!/bin/zsh
 " python -m json.tool|python -c "import re,sys;sys.stdout.write(re.sub(r\"\\\u[0-9a-f]{4}\", lambda m:m.group().decode(\"unicode_escape\").encode(\"utf-8\"), sys.stdin.read()))"
@@ -355,12 +370,17 @@ nnoremap <silent><leader>m :if &mouse == 'a' \| set mouse= \| echo 'mouse mode o
 " 文件编码转换
 nnoremap <silent><leader>l :if &fenc == 'utf-8' \| e! ++enc=cp936 \| else \| e ++enc=utf-8 \| endif<cr>
 
+" utf8 2 gbk hex
+" shell: iconv -f utf8 -t cp936 | hexdump -e '16/1 "%.1x"' | sed 's/../\\x&/g'
+" vnoremap <silent><leader>c :<c-u>s/\%V.*\%V./\=system('u8_2gbkhex', submatch(0))/g<cr>:noh<cr>``
+" nnoremap <silent><leader>c :<c-u>s/\%#./\=system('u8_2gbkhex', submatch(0))/g<cr>:noh<cr>``
+
 " 8进制中文转换 如：\346\230\257\347\232\204 == 是的
 vnoremap <silent><leader>c :s/\(\(\\\d\{3\}\)\{3,\}\)/\=system('x=`cat`&&awk "BEGIN{printf \"$x\"}"', submatch(1))/g<cr>:noh<cr>
 nnoremap <silent><leader>c :s/\(\(\\\d\{3\}\)\{3,\}\)/\=system('x=`cat`&&awk "BEGIN{printf \"$x\"}"', submatch(1))/g<cr>:noh<cr>
 
 " 代码折叠 折叠最近的大括号
-set foldmethod=manual
+set foldmethod=syntax
 command! -nargs=0 FoldCurrentField :call <sid>fold_current_field()
 " augroup foldFunc
 "     autocmd! BufWritePre,BufWinLeave *.js,*.c,*.cc,*.cpp,*.h,*.hh,*.hpp,*.go mkview
@@ -416,7 +436,7 @@ function! s:fold_current_field()
     endif
     execute "normal! zc"
 endf
-nnoremap <silent> za :FoldCurrentField<cr>
+" nnoremap <silent> za :FoldCurrentField<cr>
 
 " buffer开关
 command! -nargs=0 CloseBufferFirst :call <sid>close_current_buffer()
@@ -516,7 +536,7 @@ autocmd BufNewFile *.h,*.hpp exec ":call AddNewHPP()"
 autocmd BufNewFile *.go exec ":call AddNewGo()"
 
 function! AddNewSh()
-	call append(0, "#!/bin/bash")
+	call append(0, "#!/usr/bin/env bash")
 endfunction
 
 function! AddNewC()
