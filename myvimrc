@@ -425,6 +425,10 @@ function! FormatGoCode()
   endif
   " 将格式化的结果分割成行列表
   let l:lines = split(l:formatted, "\n", 1)
+  " 从列表末尾开始移除空字符串
+  while !empty(l:lines) && l:lines[-1] ==# ''
+    call remove(l:lines, -1)
+  endwhile
   " 确保行数正确
   call ResetLine(l:start_pos, l:end_pos-l:start_pos+1, len(l:lines))
   " 替换缓冲区内容至新的行数或当前行数的最小值
