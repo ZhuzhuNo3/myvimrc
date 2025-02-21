@@ -409,11 +409,14 @@ function! GetGlobalGoDefEnd(line)
   return l:end_pos
 endfunction
 
-function! FormatGoCode()
+function! FormatGoCode(start, end)
+  if a:end < a:start
+    let [a:end, a:start] = [a:start, a:end]
+  endif
   " 查找当前光标所在位置的函数、定义开始
-  let l:start_pos = GetGlobalGoDef(line('.'))
+  let l:start_pos = GetGlobalGoDef(a:start)
   " 查找结束位置
-  let l:end_pos = GetGlobalGoDefEnd(l:start_pos)
+  let l:end_pos = GetGlobalGoDefEnd(GetGlobalGoDef(a:end))
   " 向上下进行扩充
   let l:start_pos = GetGlobalGoDef(l:start_pos-1)
   let l:end_pos = GetGlobalGoDefEnd(l:end_pos+1)
@@ -437,7 +440,13 @@ function! FormatGoCode()
   write
 endfunction
 
-autocmd FileType go inoremap <silent><buffer> <Esc> <Esc>:call KeepView('FormatGoCode')<CR>
+augroup GoFileTypeMappings
+  autocmd!
+  autocmd FileType go nnoremap <silent><buffer> ==  :call KeepView('FormatGoCode', line('.'), line('.'))<CR>
+  autocmd FileType go nnoremap <silent><buffer> =G  :call KeepView('FormatGoCode', line('.'), line('$'))<CR>
+  autocmd FileType go nnoremap <silent><buffer> =gg :call KeepView('FormatGoCode', 1, line('.'))<CR>
+  autocmd FileType go vnoremap <silent><buffer> =   :call KeepView('FormatGoCode', line("'<"), line("'>"))<CR>
+augroup END
 
 " 格式化Json
 nnoremap <silent> <leader>j :execute '%!jq -M --indent 2' \| :set ft=json \| :1<cr>
