@@ -1,101 +1,84 @@
 import os
-import re
-import json
+import ycm_core
 
-# cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-compilation_database_file = ''
+# --- Python 相关配置 ---
+VENV_NAMES = ['.venv', 'venv', '.env']
 
-flags = [
-'-Wall',
-'-Wextra',
-'-Wno-long-long',
-'-Wno-variadic-macros',
-'-fexceptions',
-'-DNDEBUG',
-'-std=c++11',
-'-x',
-'c++',
-]
+def FindVenv(filename):
+    current_dir = os.path.dirname(os.path.abspath(filename))
+    while True:
+        for venv_name in VENV_NAMES:
+            venv_path = os.path.join(current_dir, venv_name)
+            interpreter_path = os.path.join(venv_path, 'bin', 'python')
+            if os.path.exists(interpreter_path):
+                return interpreter_path
+        parent_dir = os.path.dirname(current_dir)
+        if parent_dir == current_dir:
+            break
+        current_dir = parent_dir
+    return None
 
-def AddCompilationDatabase( comp_database_file ):
-  flags_set=set()
-  with open(comp_database_file,'r') as f:
-    comp_db = json.load(f)
-    for cmd in comp_db:
-      if "command" in cmd:
-        for inc in re.findall(r" ((?:-I|-isystem)\s?(?:[^\s]*(?:\\ )?/?)+)",cmd["command"]):
-          flags_set.add(inc)
-      if "arguments" in cmd:
-        incs = cmd["arguments"]
-        for i in range(0, len(incs)):
-          if re.match(r"^(-I|-isystem)$", incs[i]) and i + 1 != len(incs):
-            flags_set.add(incs[i]+incs[i+1])
-          elif re.match(r"^((-I|-isystem).+)$",incs[i]):
-            flags_set.add(incs[i])
-  return list(flags_set)
+def PythonSettings(filename):
+    interpreter_path = FindVenv(filename)
+    if interpreter_path:
+        return {'interpreter_path': interpreter_path}
+    return {'interpreter_path': '/opt/homebrew/bin/python3'} # <-- 默认 Python 3 路径
 
-pwd = os.getcwd()
-for dbPath in [
-    compilation_database_file,
-    pwd + '/build/compile_commands.json',
-    pwd + '/compile_commands.json',
-    pwd + '/../' + os.path.basename(pwd) + '_compile_commands.json',
-    ]:
-  if os.path.exists( dbPath ):
-    flags += AddCompilationDatabase( dbPath )
-    break
+# --- C++ 相关配置 ---
+SOURCE_EXTENSIONS = ['.cpp', '.cxx', '.cc', '.c', '.m', '.mm']
 
-flags += [
-'-isystem',
-'/usr/local/include',
-'-isystem',
-'/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1',
-'-isystem',
-'/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/12.0.0/include',
-'-isystem',
-'/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include',
-'-isystem',
-'/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include',
-'-isystem',
-'/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks',
+def FindCompilationDatabase(filename):
+    current_dir = os.path.dirname(os.path.abspath(filename))
+    while True:
+        db_path = os.path.join(current_dir, 'compile_commands.json')
+        if os.path.exists(db_path):
+            return ycm_core.CompilationDatabase(current_dir)
+        parent_dir = os.path.dirname(current_dir)
+        if parent_dir == current_dir:
+            return None
+        current_dir = parent_dir
+    return None
 
-# Termux
-'-isystem',
-'/data/data/com.termux/files/usr/include',
-'-isystem',
-'/data/data/com.termux/files/usr/include/c++/v1',
-'-isystem',
-'/data/data/com.termux/files/usr/include/c++/v1/experimental',
+def IsHeaderFile(filename):
+    return os.path.splitext(filename)[1] in ['.h', '.hxx', '.hpp', '.hh']
 
-'-I',
-'/Users/zhuzhou/追一科技/Bot/code/yibot/calc/mcppp/mcp++/inc',
-'-I',
-'/usr/local/Cellar/protobuf/*/include',
-'-I',
-'/usr/local/Cellar/jsoncpp',
-'-I',
-'/Users/zhuzhou/追一科技/Bot/code/yibot/calc/common',
-'-I',
-'/Users/zhuzhou/追一科技/Bot/code/yibot/calc/mcppp/mcp++/mcp++/src/TsdBase',
-'-I',
-'/Users/zhuzhou/追一科技/Bot/code/yibot/calc/mcppp/mcp++/mcp++/src/base',
-'-I',
-'/Users/zhuzhou/追一科技/Bot/code/yibot/calc/mcppp/mcp++/mcp++/src/ccd',
-'-I',
-'/Users/zhuzhou/追一科技/Bot/code/yibot/calc/mcppp/mcp++/mcp++/src/dcc',
-'-I',
-'/Users/zhuzhou/追一科技/Bot/code/yibot/calc/mcppp/mcp++/mcp++/src/libhttp',
-'-I',
-'/Users/zhuzhou/追一科技/Bot/code/yibot/calc/mcppp/mcp++/mcp++/src/mcd',
-'-I',
-'/Users/zhuzhou/追一科技/Bot/code/yibot/calc/mcppp/mcp++/mcp++/src/old',
-'-I',
-'/Users/zhuzhou/追一科技/Bot/code/yibot/calc/mcppp/mcp++/mcp++/src/watchdog',
-'-I',
-'/Users/zhuzhou/追一科技/Bot/code/yibot/calc/mcppp/mcp++/mcp++/src/wtg',
-]
+def GetCompilationInfoForFile(database, filename):
+    if IsHeaderFile(filename):
+        basename = os.path.splitext(filename)[0]
+        for extension in SOURCE_EXTENSIONS:
+            replacement_file = basename + extension
+            if os.path.exists(replacement_file):
+                info = database.GetCompilationInfoForFile(replacement_file)
+                if info.compiler_flags_:
+                    return info
+        return None
+    return database.GetCompilationInfoForFile(filename)
 
-def Settings( **kwargs ):
-  return {
-    'flags': flags,
-  }
+def CppSettings(filename):
+    database = FindCompilationDatabase(filename)
+    if not database:
+        return {
+            'flags': ['-Wall', '-Wextra', '-std=c++17', '-x', 'c++', '-I', '.'],
+        }
+    
+    compilation_info = GetCompilationInfoForFile(database, filename)
+    if not compilation_info:
+        return None
+
+    return {
+        'flags': list(compilation_info.compiler_flags_),
+        'include_paths_relative_to_dir': compilation_info.compiler_working_dir_
+    }
+
+# --- YCM 主入口函数 ---
+def Settings(**kwargs):
+    language = kwargs['language']
+    filename = kwargs['filename']
+
+    if language == 'python':
+        return PythonSettings(filename)
+    
+    if language in ['cfamily', 'cpp', 'c']:
+        return CppSettings(filename)
+    
+    return {}

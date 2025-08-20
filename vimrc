@@ -121,6 +121,16 @@ endfunction
 " for ssh
 " vmap <silent> <c-c> :<c-u>call system('nc -c ${SSH_CONNECTION%% *} 2000', Get_visual_selection())<cr>
 
+" 远端拷贝
+" 自行实现命令pbcopy-remote
+" vnoremap <c-c> :w !pbcopy-remote<CR><CR>
+" #!/usr/bin/env bash
+" pbcopy
+" _remote_ip="${SSH_CLIENT%% *}"
+" if [ ! -z "$_remote_ip" ]; then
+"   pbpaste | nc "$_remote_ip" 2000
+" fi
+
 vmap <c-c> "+y
 
 " cd to path of current file 
@@ -141,7 +151,7 @@ Plug 'tiagofumo/vim-nerdtree-syntax-highlight'
 Plug 'Xuyuanp/nerdtree-git-plugin'
 Plug 'chxuan/cpp-mode'
 Plug 'preservim/tagbar'
-Plug 'ycm-core/YouCompleteMe', { 'do': 'python3 ./install.py --clangd-completer --go-completer' }
+Plug 'ycm-core/YouCompleteMe', { 'do': 'python3 ./install.py --clangd-completer --go-completer --rust-completer' }
 Plug 'jasontbradshaw/pigeon.vim'
 Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
 Plug 'haya14busa/incsearch.vim'
@@ -166,6 +176,7 @@ Plug 'octol/vim-cpp-enhanced-highlight'
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'ryanoasis/vim-devicons'
+Plug 'rust-lang/rust.vim'
 " Plug 'junegunn/vim-slash'
 Plug 'junegunn/gv.vim'
 " Plug 'terryma/vim-smooth-scroll'
@@ -247,8 +258,7 @@ let g:tagbar_type_go = {
 
 " YCM
 let g:ycm_clangd_args=['--header-insertion=never']
-let g:ycm_gopls_binary_path='/Users/zhuzhou/Code/go/bin/gopls'
-let g:ycm_clangd_binary_path='/usr/local/bin/clangd'
+let g:ycm_server_log_level = 'debug'
 let g:ycm_show_diagnostics_ui = 1
 let g:ycm_confirm_extra_conf = 0
 let g:ycm_auto_hover = ''
@@ -265,9 +275,18 @@ let g:ycm_collect_identifiers_from_tags_files = 1
 let g:ycm_min_num_of_chars_for_completion = 2
 let g:ycm_semantic_triggers =  {
             \   'c,cpp,objcpp' : ['->', '.', '::','re!\w{2}'],
-            \   'python,go' : ['.','re!\w{2}'],
+            \   'python,go' : ['.','re!\w{1}'],
+            \   'ruby,rust': ['.', '::'],
             \ }
             " \   'cs,java,javascript,typescript,d,python,perl6,scala,vb,elixir,go' : ['.','re!\w{2}'],
+" 使用自定义的 LSP 位置
+" go install golang.org/x/tools/gopls@latest
+let g:ycm_gopls_binary_path='/Users/zz/Code/go/bin/gopls'
+" brew install llvm
+let g:ycm_clangd_binary_path='/usr/bin/clangd'
+" rustup component add rust-analyzer
+let g:ycm_rust_toolchain_root = '/Users/zz/.cargo'
+
 nnoremap <leader>U :YcmCompleter GoToDeclaration<cr>
 nnoremap <leader>u :YcmCompleter GoToDefinition<cr>
 nnoremap <leader>o :YcmCompleter GoToInclude<cr>
@@ -345,7 +364,7 @@ let g:mkdp_path_to_chrome = "/Applications/Google\\ Chrome.app/Contents/MacOS/Go
 let g:vim_markdown_toc_autofit = 1
 let g:vim_markdown_math = 1
 " let g:mkdp_markdown_css='githubdiy.css'
-let g:mkdp_markdown_css="/Users/zhuzhou/Library/Application\\ Support/abnerworks.Typora/themes/githubdiy.css"
+let g:mkdp_markdown_css="/Users/zz/Library/Application\\ Support/abnerworks.Typora/themes/githubdiy.css"
 let g:mkdp_auto_close = 0
 nmap <silent> <F7> <Plug>MarkdownPreview
 imap <silent> <F7> <Plug>MarkdownPreview
@@ -380,14 +399,18 @@ function! ResetLine(start_pos, old, new)
 endfunction
 
 function! GetGlobalGoDef(line)
-  if a:line < 0
-    return 0
+  if a:line < 1
+    return 1
   endif
   if a:line > line('$')
     return line('$')
   endif
   call cursor(a:line, 0)
-  return search('^\%(func\|const\|var\|type\)\>', 'bcnW')
+  let l:ans = search('^\%(func\|const\|var\|type\)\>', 'bcnW')
+  if l:ans < 1
+    return 1
+  endif
+  return l:ans
 endfunction
 
 function! GetGlobalGoDefEnd(line)
@@ -405,11 +428,14 @@ function! GetGlobalGoDefEnd(line)
   return l:end_pos
 endfunction
 
-function! FormatGoCode()
+function! FormatGoCode(start, end)
+  if a:end < a:start
+    let [a:end, a:start] = [a:start, a:end]
+  endif
   " 查找当前光标所在位置的函数、定义开始
-  let l:start_pos = GetGlobalGoDef(line('.'))
+  let l:start_pos = GetGlobalGoDef(a:start)
   " 查找结束位置
-  let l:end_pos = GetGlobalGoDefEnd(l:start_pos)
+  let l:end_pos = GetGlobalGoDefEnd(GetGlobalGoDef(a:end))
   " 向上下进行扩充
   let l:start_pos = GetGlobalGoDef(l:start_pos-1)
   let l:end_pos = GetGlobalGoDefEnd(l:end_pos+1)
@@ -421,6 +447,10 @@ function! FormatGoCode()
   endif
   " 将格式化的结果分割成行列表
   let l:lines = split(l:formatted, "\n", 1)
+  " 从列表末尾开始移除空字符串
+  while !empty(l:lines) && l:lines[-1] ==# ''
+    call remove(l:lines, -1)
+  endwhile
   " 确保行数正确
   call ResetLine(l:start_pos, l:end_pos-l:start_pos+1, len(l:lines))
   " 替换缓冲区内容至新的行数或当前行数的最小值
@@ -429,7 +459,13 @@ function! FormatGoCode()
   write
 endfunction
 
-autocmd FileType go inoremap <silent><buffer> <Esc> <Esc>:call KeepView('FormatGoCode')<CR>
+augroup GoFileTypeMappings
+  autocmd!
+  autocmd FileType go nnoremap <silent><buffer> ==  :call KeepView('FormatGoCode', line('.'), line('.'))<CR>
+  autocmd FileType go nnoremap <silent><buffer> =G  :call KeepView('FormatGoCode', line('.'), line('$'))<CR>
+  autocmd FileType go nnoremap <silent><buffer> =gg :call KeepView('FormatGoCode', 1, line('.'))<CR>
+  autocmd FileType go vnoremap <silent><buffer> =   :call KeepView('FormatGoCode', line("'<"), line("'>"))<CR>
+augroup END
 
 " 格式化Json
 nnoremap <silent> <leader>j :execute '%!jq -M --indent 2' \| :set ft=json \| :1<cr>
